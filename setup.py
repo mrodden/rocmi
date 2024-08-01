@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf8") as fd:
 
 setup(
     name="rocmi",
-    version="0.1.0",
+    version="0.1.1",
     author="Mathew Odden",
     author_email="matodden@amd.com",
     url="https://github.com/mrodden/rocmi",
@@ -15,7 +15,7 @@ setup(
     long_description=long_desc,
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
-    packages=find_packages(),
+    packages=find_packages(where="src",),
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
