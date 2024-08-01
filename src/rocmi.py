@@ -60,8 +60,8 @@ class Metrics_1_5(ctypes.Structure):
         ("current_socket_power", u16),
         ("average_gfx_activity", c_uint16),
         ("average_umc_activity", c_uint16),
-        ("vcn_activity", u16 * 4),
-        ("jpeg_activity", u16 * 32),
+        ("vcn_activity", u16 * RSMI_MAX_NUM_VCNS),
+        ("jpeg_activity", u16 * RSMI_MAX_NUM_JPEG_ENGS),
         ("energy_accumulator", c_uint64),
         ("system_clock_counter", c_uint64),
         ("throttle_status", c_uint32),
@@ -82,15 +82,15 @@ class Metrics_1_5(ctypes.Structure):
         ("pcie_nak_sent_count_acc", u32),
         ("pcie_nak_rcvd_count_acc", u32),
 
-        ("xgmi_read_data_acc", u64 * 8),
-        ("xgmi_write_data_acc", u64 * 8),
+        ("xgmi_read_data_acc", u64 * RSMI_MAX_NUM_XGMI_LINKS),
+        ("xgmi_write_data_acc", u64 * RSMI_MAX_NUM_XGMI_LINKS),
 
         ("firmware_timestamp", c_uint64),
 
-        ("current_gfxclks", c_uint16 * 8),
-        ("current_socclks", c_uint16 * 4),
-        ("current_vclk0s", c_uint16 * 4),
-        ("current_dclk0s", c_uint16 * 4),
+        ("current_gfxclks", c_uint16 * RSMI_MAX_NUM_GFX_CLKS),
+        ("current_socclks", c_uint16 * RSMI_MAX_NUM_CLKS),
+        ("current_vclk0s", c_uint16 * RSMI_MAX_NUM_CLKS),
+        ("current_dclk0s", c_uint16 * RSMI_MAX_NUM_CLKS),
         ("current_uclk", c_uint16),
 
         ("_padding", c_uint16),
