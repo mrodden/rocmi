@@ -313,12 +313,12 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
     def name(self):
         default_name = "UNKNOWN"
 
-        name = search_pci_ids(self.device_id[2:])
+        try:
+            return self.drm_file_info("product_name")
+        except FileNotFoundError:
+            pass
 
-        if not name:
-            return default_name
-
-        return name
+        return search_pci_ids(self.device_id[2:]) or default_name
 
     @property
     def guid(self):
