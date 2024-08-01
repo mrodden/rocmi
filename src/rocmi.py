@@ -29,6 +29,7 @@ LOG = logging.getLogger(__name__)
 
 u8 = c_uint8
 u16 = c_uint16
+u32 = c_uint32
 u64 = c_uint64
 
 
@@ -50,6 +51,50 @@ RSMI_MAX_NUM_GFX_CLKS = 8
 RSMI_MAX_NUM_CLKS = 4
 RSMI_MAX_NUM_JPEG_ENGS = 32
 
+class Metrics_1_5(ctypes.Structure):
+    _fields_ = [
+        ("metrics_header", MetricsHeader),
+        ("temperature_hotspot", u16),
+        ("temperature_mem", u16),
+        ("temperature_vrsoc", u16),
+        ("current_socket_power", u16),
+        ("average_gfx_activity", c_uint16),
+        ("average_umc_activity", c_uint16),
+        ("vcn_activity", u16 * 4),
+        ("jpeg_activity", u16 * 32),
+        ("energy_accumulator", c_uint64),
+        ("system_clock_counter", c_uint64),
+        ("throttle_status", c_uint32),
+        ("gfxclk_lock_status", u32),
+        ("pcie_link_width", c_uint16),
+        ("pcie_link_speed", c_uint16),
+        ("xgmi_link_width", u16),
+        ("xgmi_link_speed", u16),
+        ("gfx_activity_acc", c_uint32),
+        ("mem_activity_acc", c_uint32),
+
+        ("pcie_bandwidth_acc", u64),
+        ("pcie_bandwidth_inst", u64),
+        ("pcie_l0_to_recov_count_acc", u64),
+        ("pcie_replay_count_acc", u64),
+        ("pcie_replay_rover_count_acc", u64),
+
+        ("pcie_nak_sent_count_acc", u32),
+        ("pcie_nak_rcvd_count_acc", u32),
+
+        ("xgmi_read_data_acc", u64 * 8),
+        ("xgmi_write_data_acc", u64 * 8),
+
+        ("firmware_timestamp", c_uint64),
+
+        ("current_gfxclks", c_uint16 * 8),
+        ("current_socclks", c_uint16 * 4),
+        ("current_vclk0s", c_uint16 * 4),
+        ("current_dclk0s", c_uint16 * 4),
+        ("current_uclk", c_uint16),
+
+        ("_padding", c_uint16),
+    ]
 
 class Metrics_1_3(ctypes.Structure):
     _fields_ = [
@@ -286,7 +331,13 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
         with open(os.path.join(self.path, "gpu_metrics"), "rb") as fd:
             dat = fd.read()
 
-        return Metrics_1_3.from_buffer_copy(dat)
+        mh = MetricsHeader.from_buffer_copy(dat[:4])
+        if mh.content_revision == 3:
+            return Metrics_1_3.from_buffer_copy(dat)
+        elif mh.content_revision == 5:
+            return Metrics_1_5.from_buffer_copy(dat)
+        else:
+            raise NotImplementedError
 
     def drm_file_info(self, file_name):
         with open(os.path.join(self.path, file_name)) as fd:
