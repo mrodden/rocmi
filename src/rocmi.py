@@ -278,14 +278,19 @@ class PowerDescriptorMixin:
 
     @property
     def current_power(self):
+        """Return current power in milliwatts."""
         m = self.get_metrics()
         try:
-            return m.current_socket_power
+            w = m.current_socket_power
         except AttributeError:
-            return m.average_socket_power
+            w = m.average_socket_power
+
+        mw = w * 1000000
+        return mw
 
     @property
     def power_limit(self):
+        """Return current power limit in milliwatts."""
         return int(self._hwmon_data("power1_cap"))
 
 
