@@ -51,6 +51,7 @@ RSMI_MAX_NUM_GFX_CLKS = 8
 RSMI_MAX_NUM_CLKS = 4
 RSMI_MAX_NUM_JPEG_ENGS = 32
 
+
 class Metrics_1_5(ctypes.Structure):
     _fields_ = [
         ("metrics_header", MetricsHeader),
@@ -72,29 +73,24 @@ class Metrics_1_5(ctypes.Structure):
         ("xgmi_link_speed", u16),
         ("gfx_activity_acc", c_uint32),
         ("mem_activity_acc", c_uint32),
-
         ("pcie_bandwidth_acc", u64),
         ("pcie_bandwidth_inst", u64),
         ("pcie_l0_to_recov_count_acc", u64),
         ("pcie_replay_count_acc", u64),
         ("pcie_replay_rover_count_acc", u64),
-
         ("pcie_nak_sent_count_acc", u32),
         ("pcie_nak_rcvd_count_acc", u32),
-
         ("xgmi_read_data_acc", u64 * RSMI_MAX_NUM_XGMI_LINKS),
         ("xgmi_write_data_acc", u64 * RSMI_MAX_NUM_XGMI_LINKS),
-
         ("firmware_timestamp", c_uint64),
-
         ("current_gfxclks", c_uint16 * RSMI_MAX_NUM_GFX_CLKS),
         ("current_socclks", c_uint16 * RSMI_MAX_NUM_CLKS),
         ("current_vclk0s", c_uint16 * RSMI_MAX_NUM_CLKS),
         ("current_dclk0s", c_uint16 * RSMI_MAX_NUM_CLKS),
         ("current_uclk", c_uint16),
-
         ("_padding", c_uint16),
     ]
+
 
 class Metrics_1_3(ctypes.Structure):
     _fields_ = [
@@ -263,7 +259,6 @@ def read_process_fdinfos():
 
 
 class PowerDescriptorMixin:
-
     def _hwmon_data(self, file_name):
         hwmon_dir = next(iter(os.listdir(os.path.join(self.path, "hwmon"))), None)
 
@@ -295,7 +290,6 @@ class PowerDescriptorMixin:
 
 
 class MemoryDescriptorMixin:
-
     @property
     def vram_used(self):
         return int(self.drm_file_info("mem_info_vram_used"))
