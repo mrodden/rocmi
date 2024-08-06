@@ -339,8 +339,11 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
 
     @property
     def serial(self):
-        with open(os.path.join(self.path, "serial_number")) as fd:
-            dat = fd.read().strip()
+        try:
+            with open(os.path.join(self.path, "serial_number")) as fd:
+                dat = fd.read().strip()
+        except FileNotFoundError:
+            dat = None
 
         return dat
 
