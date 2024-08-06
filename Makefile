@@ -1,4 +1,4 @@
-.PHONY: dist publish fmt 
+.PHONY: dist publish fmt
 
 fmt:
 	black -t py36 setup.py src/rocmi.py
