@@ -143,7 +143,8 @@ def print_struct(s):
         print("%s=%r" % (f, getattr(s, f)))
 
 
-def iter_devices():
+def _iter_drm_devices():
+    """Discover AMD GPU devices in '/sys/class/drm'."""
 
     devices = []
 
@@ -304,6 +305,10 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
         self.path = path
 
     @property
+    def bus_id(self):
+        return os.path.realpath(self.path).rsplit("/")[-1]
+
+    @property
     def name(self):
         default_name = "UNKNOWN"
 
@@ -315,13 +320,26 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
         return search_pci_ids(self.device_id[2:]) or default_name
 
     @property
-    def guid(self):
+    def unique_id(self):
         with open(os.path.join(self.path, "unique_id")) as fd:
-            return fd.read().strip()
+            guid_hex = fd.read().strip()
+
+        return guid_hex
+
+    @property
+    def unique_id_as_int(self):
+        return int(self.unique_id, 16)
 
     @property
     def device_id(self):
         with open(os.path.join(self.path, "device")) as fd:
+            dat = fd.read().strip()
+
+        return dat
+
+    @property
+    def serial(self):
+        with open(os.path.join(self.path, "serial_number")) as fd:
             dat = fd.read().strip()
 
         return dat
@@ -346,6 +364,10 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
         return read_clocks(os.path.join(self.path, "pp_dpm_sclk"))
 
 
+def get_devices():
+    return sorted(map(get_device_info, _iter_drm_devices()), key=lambda x: x.bus_id)
+
+
 def get_device_info(handle):
     return DeviceInfo(ctop(handle))
 
@@ -355,7 +377,7 @@ def ctop(card):
 
 
 def main():
-    devices = iter_devices()
+    devices = _iter_drm_devices()
 
     for d in devices:
         dat = get_device_info(d).get_metrics()
