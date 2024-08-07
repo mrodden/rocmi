@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import argparse
+import logging
 
 from prettytable import PrettyTable, PLAIN_COLUMNS
 
@@ -51,9 +52,10 @@ def main():
 
     elif args.action == "list-processes":
         for ps in rocmi.get_processes():
-            print("%r" % ps)
+            print("%r" % (ps,))
 
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

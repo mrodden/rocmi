@@ -15,7 +15,6 @@
 # limitations under the License.
 
 
-from collections import namedtuple
 import ctypes
 from ctypes import c_uint8, c_uint16, c_uint32, c_uint64
 import logging
@@ -23,6 +22,8 @@ import os
 import sys
 import re
 import struct
+
+from rocmi.kfd import get_processes
 
 
 LOG = logging.getLogger(__name__)
@@ -204,59 +205,6 @@ def read_clocks(path):
             clocks.append(int(match.group(1)))
 
     return clocks
-
-
-ComputeProcess = namedtuple(
-    "ComputeProcess",
-    [
-        "pid",
-        "pasid",
-    ],
-)
-
-
-def get_processes():
-    parent = "/sys/class/kfd/kfd/proc"
-    procs = []
-    for proc_dir in os.listdir(parent):
-
-        try:
-            pid = int(proc_dir)
-        except Exception:
-            continue
-
-        with open(os.path.join(parent, proc_dir, "pasid")) as fd:
-            pasid = int(fd.read().strip())
-
-        procs.append(ComputeProcess(pid=pid, pasid=pasid))
-
-    return procs
-
-
-# cat /proc/3766769/fdinfo/8
-fdinfo_sample = """
-pos:    0
-flags:  02100002
-mnt_id: 1873
-ino:    19
-pasid:  32771
-drm-driver:     amdgpu
-drm-pdev:       0000:83:00.0
-drm-client-id:  1203108
-drm-memory-vram:        76 KiB
-drm-memory-gtt:         44 KiB
-drm-memory-cpu:         6200 KiB
-amd-memory-visible-vram:        76 KiB
-amd-evicted-vram:       0 KiB
-amd-evicted-visible-vram:       0 KiB
-amd-requested-vram:     76 KiB
-amd-requested-visible-vram:     76 KiB
-amd-requested-gtt:      56 KiB
-"""
-
-
-def read_process_fdinfos():
-    pass
 
 
 class PowerDescriptorMixin:
