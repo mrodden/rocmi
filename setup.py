@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf8") as fd:
 
 setup(
     name="rocmi",
-    version="0.1.1",
+    version="0.2.0",
     author="Mathew Odden",
     author_email="matodden@amd.com",
     url="https://github.com/mrodden/rocmi",
@@ -23,4 +23,14 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     python_requires=">=3.6",
+    extras_require={
+        "cli": [
+            "prettytable>=3.9",
+        ],
+    },
+    entry_points={
+        "console_scripts": [
+            "rocmi = rocmi.cli:main [cli]",
+        ],
+    },
 )
