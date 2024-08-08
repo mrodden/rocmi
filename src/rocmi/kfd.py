@@ -164,14 +164,20 @@ def _read_props(path):
 
 class KFDNode:
 
-    def __init__(self, path, gpu_id, props):
+    def __init__(self, path):
         self.path = path
-        self.props = props
-        self.gpu_id = gpu_id
+
+    @property
+    def properties(self):
+        return _read_props(os.path.join(self.path, "properties"))
+
+    @property
+    def gpu_id(self):
+        return _read_int(os.path.join(self.path, "gpu_id"))
 
     @property
     def unique_id_as_int(self):
-        return self.props.get("unique_id")
+        return self.properties.get("unique_id")
 
     @property
     def unique_id(self):
@@ -183,6 +189,7 @@ class KFDNode:
         return None
 
 
+
 def _iter_kfd_devices():
     parent = "/sys/class/kfd/kfd/topology/nodes"
 
@@ -191,10 +198,11 @@ def _iter_kfd_devices():
     for node in os.listdir(parent):
         for fp in os.listdir(os.path.join(parent, node)):
             if fp == "gpu_id":
-                gpu_id = _read_int(os.path.join(parent, node, "gpu_id"))
-                props = _read_props(os.path.join(parent, node, "properties"))
-                if props.get("unique_id"):
-                    gpus.append(KFDNode(os.path.join(parent, node), gpu_id, props))
+                kn = KFDNode(os.path.join(parent, node))
+
+                # only consider nodes which have a unique_id
+                if kn.unique_id:
+                    gpus.append(kn)
 
     return gpus
 
