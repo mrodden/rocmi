@@ -331,6 +331,15 @@ def get_devices():
 def get_device_info(handle):
     return DeviceInfo(ctop(handle))
 
+def get_driver_version():
+    dat = ""
+    try:
+        with open("/sys/module/amdgpu/version", "r") as fd:
+            dat = fd.read()
+    except FileNotFoundError:
+        pass
+    return dat.strip()
+
 
 def ctop(card):
     return "/sys/class/drm/%s/device" % card
