@@ -15,7 +15,9 @@ setup(
     long_description=long_desc,
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
-    packages=find_packages(where="src",),
+    packages=find_packages(
+        where="src",
+    ),
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import binascii
 import logging
 import os
 from collections import namedtuple
@@ -24,12 +24,14 @@ LOG = logging.getLogger(__name__)
 ComputeProcess = namedtuple(
     "ComputeProcess",
     [
-        "pid", # unix process ID
-        "pasid", # Process Address Space ID
-        "name",
-        "vram_usage", # bytes
-        "sdma_usage", # microseconds
-        "cu_occupancy", # percent
+        "pid",  # unix process ID
+        "pasid",  # Process Address Space ID
+        "name",  # command name for process
+        "vram_usage",  # bytes
+        "sdma_usage",  # microseconds
+        "cu_occupancy",  # percent
+        "gpus",  # set of KFD gpu_ids
+        "gpu_usage_info",
     ],
 )
 
@@ -47,39 +49,157 @@ def get_processes():
         with open(os.path.join(parent, proc_dir, "pasid")) as fd:
             pasid = int(fd.read().strip())
 
-        vram_usage, sdma_usage, cu_occupancy = _read_kfd_usages(pid)
+        vram_usage, sdma_usage, cu_occupancy, gpu_infos = _read_kfd_usages(pid)
+        gpus = _gpu_ids_for_pid(pid)
 
-        procs.append(ComputeProcess(pid=pid, pasid=pasid, name=read_process_name(pid), vram_usage=vram_usage, sdma_usage=sdma_usage, cu_occupancy=cu_occupancy))
+        p = ComputeProcess(
+            pid=pid,
+            pasid=pasid,
+            name=read_process_name(pid),
+            vram_usage=vram_usage,
+            sdma_usage=sdma_usage,
+            cu_occupancy=cu_occupancy,
+            gpus=gpus,
+            gpu_usage_info=gpu_infos,
+        )
+        procs.append(p)
 
     return procs
 
 
 def read_process_name(pid):
+    """Return command name associated with PID."""
+
     with open("/proc/%d/comm" % pid, "r") as fd:
         return fd.read().strip()
 
 
+def _gpu_ids_for_pid(pid):
+    return set(map(lambda x: x["gpuid"], _read_queues_for_pid(pid)))
+
+
+def _read_queues_for_pid(pid):
+    parent = "/sys/class/kfd/kfd/proc/%d/queues" % pid
+    queues = []
+
+    for queue_dir in os.listdir(parent):
+        queue = {"id": queue_dir}
+        for f in os.listdir(os.path.join(parent, queue_dir)):
+            fp = os.path.join(parent, queue_dir, f)
+            queue[f] = _read_int(fp)
+
+        queues.append(queue)
+
+    return queues
+
+
 def _read_kfd_usages(pid):
     parent = "/sys/class/kfd/kfd/proc/%d" % pid
+
+    # totals
     vram_usage = 0
     sdma_usage = 0
     cu_occupancy = 0
+    cu_occupancy_count = 0
 
-    def read_int(path):
-        with open(path, "r") as fd:
-            return int(fd.read().strip())
+    # individual gpus
+    gpus = {}
 
     for fname in os.listdir(parent):
-        if fname.startswith("vram_"):
-            vram_usage += read_int(os.path.join(parent, fname))
+        try:
+            typ, gpu_id = fname.split("_")
+            gpu_id = int(gpu_id)
+        except ValueError:
+            continue
 
-        elif fname.startswith("sdma_"):
-            sdma_usage += read_int(os.path.join(parent, fname))
+        if typ == "stats":
+            val = _read_int(os.path.join(parent, fname, "cu_occupancy"))
+            cu_occupancy_count += 1
+        elif typ in ["vram", "sdma"]:
+            val = _read_int(os.path.join(parent, fname))
+        else:
+            continue
 
-        elif fname.startswith("stats_"):
-            cu_occupancy += read_int(os.path.join(parent, fname, "cu_occupancy"))
+        if gpus.get(gpu_id) is None:
+            gpus[gpu_id] = {}
 
-    return vram_usage, sdma_usage, cu_occupancy
+        gpus[gpu_id][typ] = val
+
+        if typ == "vram":
+            vram_usage += val
+        elif typ == "sdma":
+            sdma_usage += val
+        elif typ == "stats":
+            cu_occupancy += val
+
+    return vram_usage, sdma_usage, cu_occupancy, gpus
+
+
+def _read_int(path):
+    with open(path, "r") as fd:
+        return int(fd.read().strip())
+
+
+def _read_str(path):
+    with open(path, "r") as fd:
+        return fd.read().strip()
+
+
+def _read_props(path):
+    kvs = {}
+
+    with open(path, "r") as fd:
+        for line in fd.readlines():
+            k, v = line.strip().split(" ")
+
+            try:
+                v = int(v)
+            except ValueError:
+                pass
+
+            kvs[k] = v
+
+    return kvs
+
+
+class KFDNode:
+
+    def __init__(self, path, gpu_id, props):
+        self.path = path
+        self.props = props
+        self.gpu_id = gpu_id
+
+    @property
+    def unique_id_as_int(self):
+        return self.props.get("unique_id")
+
+    @property
+    def unique_id(self):
+        uid = self.unique_id_as_int
+
+        if not uid is None:
+            return binascii.hexlify(uid.to_bytes(8, "big")).decode("utf8")
+
+        return None
+
+
+def _iter_kfd_devices():
+    parent = "/sys/class/kfd/kfd/topology/nodes"
+
+    gpus = []
+
+    for node in os.listdir(parent):
+        for fp in os.listdir(os.path.join(parent, node)):
+            if fp == "gpu_id":
+                gpu_id = _read_int(os.path.join(parent, node, "gpu_id"))
+                props = _read_props(os.path.join(parent, node, "properties"))
+                if props.get("unique_id"):
+                    gpus.append(KFDNode(os.path.join(parent, node), gpu_id, props))
+
+    return gpus
+
+
+unique_to_kfd = {s.unique_id: s for s in _iter_kfd_devices()}
 
 
 # cat /proc/3766769/fdinfo/8
@@ -124,6 +244,3 @@ def read_process_fdinfos(pid):
         LOG.info(f"{kvs=}")
 
     return vram_kib
-
-
-

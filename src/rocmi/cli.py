@@ -44,16 +44,61 @@ def main():
         if args.format == "COLUMN":
             tab.set_style(PLAIN_COLUMNS)
 
-        tab.field_names = ["INDEX", "ID", "SERIAL", "NAME", "DRM_PATH", "BUS_ID"]
+        tab.field_names = [
+            "INDEX",
+            "ID",
+            "SERIAL",
+            "NAME",
+            "DRM_PATH",
+            "BUS_ID",
+            "PROCESSES",
+        ]
         for i, card in enumerate(rocmi.get_devices()):
-            tab.add_row([i, card.unique_id, card.serial, card.name, card.path, card.bus_id])
+            processes = list(
+                map(lambda x: "%s(%d)" % (x.name, x.pid), card.get_processes())
+            )
+            tab.add_row(
+                [
+                    i,
+                    card.unique_id,
+                    card.serial,
+                    card.name,
+                    card.path,
+                    card.bus_id,
+                    processes,
+                ]
+            )
 
         print(tab)
 
     elif args.action == "list-processes":
-        for ps in rocmi.get_processes():
-            print("%r" % (ps,))
+        tab = PrettyTable()
+        tab.align = "l"
 
+        tab.field_names = [
+            "PID",
+            "PASID",
+            "NAME",
+            "VRAM",
+            "SDMA_USAGE",
+            "CU_OCCUPANCY",
+            "GPUS",
+        ]
+        ps = rocmi.get_processes()
+        for p in ps:
+            tab.add_row(
+                [
+                    p.pid,
+                    p.pasid,
+                    p.name,
+                    p.vram_usage,
+                    p.sdma_usage,
+                    p.cu_occupancy,
+                    p.gpus or None,
+                ]
+            )
+
+        print(tab)
 
 
 if __name__ == "__main__":

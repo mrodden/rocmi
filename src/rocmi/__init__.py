@@ -314,6 +314,15 @@ class DeviceInfo(MemoryDescriptorMixin, PowerDescriptorMixin):
     def get_clock_info(self):
         return read_clocks(os.path.join(self.path, "pp_dpm_sclk"))
 
+    def get_processes(self):
+        """Return a list of ComputeProcess that have allocations on this device."""
+        node = kfd.unique_to_kfd.get(self.unique_id)
+        if not node:
+            raise Exception("No KFD device found matching %r")
+
+        ps = get_processes()
+        return list(filter(lambda x: node.gpu_id in x.gpus, ps))
+
 
 def get_devices():
     return sorted(map(get_device_info, _iter_drm_devices()), key=lambda x: x.bus_id)
