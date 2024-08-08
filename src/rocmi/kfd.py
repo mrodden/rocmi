@@ -241,6 +241,4 @@ def read_process_fdinfos(pid):
 
                 kvs[key] = rest.strip()
 
-        LOG.info(f"{kvs=}")
-
     return vram_kib

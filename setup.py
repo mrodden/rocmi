@@ -25,7 +25,7 @@ setup(
     python_requires=">=3.6",
     extras_require={
         "cli": [
-            "prettytable>=3.9",
+            "prettytable>=2",
         ],
     },
     entry_points={
