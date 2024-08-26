@@ -1,4 +1,4 @@
-name: black formatting check
+name: Check black formatting
 
 on: [push, pull_request]
 
@@ -10,4 +10,4 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check --diff -t py36"
-          src: "./src"
+          src: "setup.py src tests"

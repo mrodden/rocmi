@@ -1,7 +1,12 @@
-.PHONY: dist publish fmt
+.PHONY: dist publish fmt test
+
+test:
+	# make sure to install test-requirements locally first with:
+	# pip install -r tests-req.in
+	python -m unittest discover -v tests
 
 fmt:
-	black -t py36 setup.py src
+	black -t py36 setup.py src tests
 
 dist:
 	python setup.py sdist bdist_wheel
