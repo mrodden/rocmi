@@ -24,7 +24,7 @@ jobs:
     - name: install deps
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r tests-req.in
+        python -m pip install -r tests-req.in .
     - name: run tests
       run: |
         make test
