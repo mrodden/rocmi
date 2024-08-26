@@ -189,7 +189,6 @@ class KFDNode:
         return None
 
 
-
 def _iter_kfd_devices():
     parent = "/sys/class/kfd/kfd/topology/nodes"
 
