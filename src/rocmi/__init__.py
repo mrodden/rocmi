@@ -199,7 +199,7 @@ def read_clocks(path):
 
     clocks = []
     for line in dat.split("\n"):
-        pat = re.compile("\d: ([\d]+)[\w]+")
+        pat = re.compile(r"\d: ([\d]+)[\w]+")
         match = pat.search(line)
         if match:
             clocks.append(int(match.group(1)))
