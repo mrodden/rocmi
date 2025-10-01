@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf8") as fd:
 
 setup(
     name="rocmi",
-    version="0.2.0",
+    version="0.3.1",
     author="Mathew Odden",
     author_email="matodden@amd.com",
     url="https://github.com/mrodden/rocmi",
