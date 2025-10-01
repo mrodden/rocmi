@@ -172,8 +172,23 @@ def _iter_drm_devices():
 
 
 def search_pci_ids(device_id):
-    with open("/usr/share/misc/pci.ids") as fd:
-        lines = fd.read().split("\n")
+
+    pci_id_file_locs = [
+        "/usr/share/misc/pci.ids",   # debian family
+        "/usr/share/hwdata/pci.ids", # rhel family
+    ]
+
+    lines = None
+
+    for loc in pci_id_file_locs:
+        try:
+            LOG.debug("Searching for pci.ids at %r" % loc)
+            with open(loc) as fd:
+                lines = fd.read().split("\n")
+                break
+
+        except FileNotFoundError:
+            continue
 
     for l in lines:
         if l.startswith("#"):
