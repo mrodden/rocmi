@@ -174,8 +174,8 @@ def _iter_drm_devices():
 def search_pci_ids(device_id):
 
     pci_id_file_locs = [
-        "/usr/share/misc/pci.ids",   # debian family
-        "/usr/share/hwdata/pci.ids", # rhel family
+        "/usr/share/misc/pci.ids",  # debian family
+        "/usr/share/hwdata/pci.ids",  # rhel family
     ]
 
     lines = None
@@ -189,6 +189,9 @@ def search_pci_ids(device_id):
 
         except FileNotFoundError:
             continue
+
+    if not lines:
+        return None
 
     for l in lines:
         if l.startswith("#"):
